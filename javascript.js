@@ -4,10 +4,10 @@ const bodyParser = require("body-parser");
 // PERBAIKAN: Mengatasi 'fetch is not a function' di Node
 const { default: fetch } = require("node-fetch");
 const app = express();
-const PORT = 3000;
+const PORT = 5000;
 
 // URL APPS SCRIPT TERBARU DARI DEPLOYMENT FINAL ANDA
-const API_URL = "https://script.google.com/macros/s/AKfycbz34nelmbQ8uzwPy029Py8nmuxQumpPUO8DY8ZiZrosg9eD50kgh-HMHiBJzceyFlqC/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbxuef1OOUrxQ1J6lTM_iwSBSuYeECjkW2-uRwROcHQ-o5yVV7J-dFGCyLypx-8-Idr4/exec";
 app.use(bodyParser.json());
 
 // Melayani file statis (HTML, CSS, JS) dari folder 'public'
