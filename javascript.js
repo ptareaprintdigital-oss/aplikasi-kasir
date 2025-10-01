@@ -4,7 +4,7 @@ const bodyParser = require("body-parser");
 // PERBAIKAN: Mengatasi 'fetch is not a function' di Node
 const { default: fetch } = require("node-fetch");
 const app = express();
-const PORT = 5000;
+const PORT = 3000;
 
 // URL APPS SCRIPT TERBARU DARI DEPLOYMENT FINAL ANDA
 const API_URL = "https://script.google.com/macros/s/AKfycbxuef1OOUrxQ1J6lTM_iwSBSuYeECjkW2-uRwROcHQ-o5yVV7J-dFGCyLypx-8-Idr4/exec";
