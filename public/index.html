@@ -1,0 +1,362 @@
+<!DOCTYPE html>    
+
+<html lang="id">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>POS AREA PRINT DIGITAL</title>
+
+  <style>
+    body {      
+      font-family: Arial, sans-serif;      
+      padding: 10px;      
+      background:#ffe8a2;      
+      margin:0;          
+    }          
+
+    input, select {
+      border: none;
+      margin-top: 8px;
+      height: 25px;
+      padding: 5px 8px;
+      border-radius: 5px;
+    }
+
+    .logo {      
+      display: block;      
+      margin: 0 auto 10px auto;      
+      width: 150px; /* Lebar logo diatur 150px, Anda bisa ubah ini */      
+      height: auto;      
+    }
+
+    h2 { text-align:center; }      
+
+    table {      
+      width:100%;      
+      border-collapse: collapse;
+      margin-top:10px;
+      table-layout: auto;
+      overflow-x: auto;
+      display: block; 
+    }
+
+    th, td {border:1px solid #ccc;
+      padding:5px;        
+      font-size:13px;    
+      text-align:center;
+      word-wrap: break-word; 
+    }
+
+    td input, td select {
+      width: 95%;
+      box-sizing: border-box;
+      text-align: center;
+    }
+
+    .btn {
+      padding:5px 10px;  
+      border:none;
+      cursor:pointer;
+      border-radius:4px;
+      margin: 2px;    
+    }  
+
+    .btn-green { background:green; color:white; }
+    .btn-orange { background:orange; color:white; }
+    .btn-red { background:red; color:white; }
+
+    #searchProduk {
+
+      width: 80%;
+
+      max-width: 400px;
+
+      padding: 6px;
+
+      margin: 10px auto;
+
+      display: block;
+
+      border: 1px solid #ccc;
+
+      border-radius: 4px;
+
+      text-align: center;
+
+    }
+
+    .flexible {
+      display: flex;
+      justify-content: space-evenly;
+    }
+ </style>
+</head>
+
+<body>
+
+  <img src="Logo Area Print Digital.png" alt="Logo Area Print Digital" class="logo"> 
+  
+  <h2>POS AREA PRINT DIGITAL</h2>
+
+  <form id="kasirForm">
+    
+    <div class="flexible">
+      <div class="flex-item">
+        <label>No Transaksi:</label><br>
+        <input type="text" name="no" required><br><br>
+      </div>
+      <div class="flex-item">
+        <label>Tanggal:</label><br>
+        <input type="date" name="tanggal" required><br><br>
+      </div>
+      <div class="flex-item">
+        <label>Customer:</label><br>
+        <input type="text" name="customer" required><br><br>
+      </div>
+    </div>
+    
+    <!-- kotak pencarian produk -->
+    <input type="text" id="searchProduk" style="text-align: center;" placeholder="Cari produk..." onkeyup="cariProduk()">
+    <table id="produkTable">
+
+      <thead>
+
+        <tr>
+
+          <th>Produk</th><th>Qty</th><th>Panjang</th><th>Lebar</th>
+
+          <th>Volume</th><th>Harga</th><th>Potongan Promo</th><th>Jumlah Harga</th><th>Hapus</th>
+
+        </tr>
+
+      </thead>
+
+      <tbody>
+
+      </tbody>
+
+    </table>
+
+    <button type="button" class="btn btn-green" onclick="tambahProduk()">+ Tambah Produk</button>
+    
+    <br><br>
+    
+    <label>Total:</label><br>
+    <input type="number" id="total" name="total" readonly value="0"><br><br>
+    <label>Terbayar:</label><br>
+    <input type="number" name="terbayar" value="0"><br><br>
+    <label>Sisa Pelunasan:</label><br>
+    <input type="number" id="sisaPelunasan" name="sisaPelunasan" readonly value="0"><br><br>
+    <label>Status:</label><br>
+    <select name="status">  
+
+      <option value="LUNAS">Lunas</option>
+
+      <option value="BELUM BAYAR" selected>Belum Bayar</option> <option value="DP">DP</option>
+
+    </select>
+    <br><br>
+    <input type="text" name="namapetugas" required><br><br>
+
+    <button type="submit" class="btn btn-green">Simpan Transaksi</button>
+    <button type="button" class="btn btn-orange" onclick="cetakStruk()">Cetak Struk</button>  </form>
+  </form>
+
+  <script>  
+    let produkMaster = [];
+
+    const API_URL = "/api";
+    const tableBody = document.querySelector("#produkTable tbody");  
+    const terbayarInput = document.querySelector("input[name='terbayar']");
+
+    function parseAngka(str) {
+      // PERBAIKAN DI SINI: Mengubah koma (,) menjadi titik (.)
+      const val = String(str || "0").replace(/,/g, '.'); 
+      return parseFloat(val) || 0;
+    }
+
+    function hapusRow(btn) {
+      btn.closest("tr").remove();
+      hitungTotal();
+    }
+
+    function updateHarga(selectElement) {const row = selectElement.closest("tr");
+      const selectedOption = selectElement.options[selectElement.selectedIndex];
+      const harga = selectedOption.dataset.harga || 0;
+      row.cells[5].querySelector("input").value = harga;
+    } 
+
+    function hitungJumlah(row) {
+      // PERBAIKAN: Input dari Panjang dan Lebar harus dibersihkan sebelum di-parse
+      const panjangValue = row.cells[2].querySelector("input").value;
+      const lebarValue = row.cells[3].querySelector("input").value;
+      // Ambil nilai yang sudah diolah dengan parseAngka
+      const qty = parseAngka(row.cells[1].querySelector("input").value);
+      const panjang = parseAngka(panjangValue); // MENGGUNAKAN parseAngka (sudah ada .replace di dalamnya)
+      const lebar = parseAngka(lebarValue); // MENGGUNAKAN parseAngka
+      const harga = parseAngka(row.cells[5].querySelector("input").value); 
+      const potongan = parseAngka(row.cells[6].querySelector("input").value);
+      // Logika Volume: (Panjang * Lebar), jika kedua input kosong atau 0, volume menjadi 1
+      const volume = (panjang > 0 || lebar > 0) ? panjang * lebar : 1;
+      row.cells[4].querySelector("input").value = volume.toFixed(2); // Diberi toFixed(2) untuk tampilan konsisten
+
+      const jumlah = qty * volume * (harga - potongan)
+      row.cells[7].querySelector("input").value = jumlah.toFixed(2);
+      hitungTotal();
+    }
+
+    function hitungTotal() {
+      let total = 0;
+      tableBody.querySelectorAll("input[name='jumlahHarga[]']").forEach(i => total += parseAngka(i.value));
+      document.getElementById("total").value = total.toFixed(2);
+
+      hitungTotal(); // PANGGILAN REPETITIF, TAPI DIBIARKAN AGAR TIDAK MENGACAK-ACAK SCRIPT ANDA
+    }
+
+    function hitungTotal() {
+      let total = 0;
+      tableBody.querySelectorAll("input[name='jumlahHarga[]']").forEach(i => total += parseAngka(i.value));
+      document.getElementById("total").value = total.toFixed(2);
+
+      const terbayar = parseAngka(terbayarInput.value);
+      document.getElementById("sisaPelunasan").value = (total - terbayar).toFixed(2);
+
+      const statusSelect = document.querySelector("select[name='status']");
+      if (terbayar >= total) {       
+         statusSelect.value = "LUNAS";
+      } else if (terbayar > 0 && terbayar < total) {
+          statusSelect.value = "DP";
+      } else { 
+          statusSelect.value = "BELUM BAYAR";
+      }
+
+    }
+
+    function buatDropdownProduk() {
+      let select = "<select name='produk[]' onchange='updateHarga(this); hitungJumlah(this.closest(\"tr\"))'>";
+      if (produkMaster.length === 0) {
+        select += '<option value="">(Memuat Produk...)</option>';
+      }
+      select += '<option value="">-- Pilih Produk --</option>';
+      produkMaster.forEach(p => {
+        select += `<option value="${p.produk}" data-harga="${p.harga}">${p.produk} (Rp ${p.harga.toLocaleString('id-ID')})</option>`;
+      });
+      select += "</select>";
+
+     return select;
+    }
+
+    function tambahProduk() {
+      const newRow = tableBody.insertRow();
+
+      newRow.insertCell(0).innerHTML = buatDropdownProduk();
+      newRow.insertCell(1).innerHTML = '<input type="number" name="qty[]" value="1" min="1" onchange="hitungJumlah(this.closest(\'tr\'))">';
+      newRow.insertCell(2).innerHTML = '<input type="text" name="panjang[]" value="0" onchange="hitungJumlah(this.closest(\'tr\'))">';
+      newRow.insertCell(3).innerHTML = '<input type="text" name="lebar[]" value="0" onchange="hitungJumlah(this.closest(\'tr\'))">';
+      newRow.insertCell(4).innerHTML = '<input type="text" name="volume[]" value="1" readonly>';
+      newRow.insertCell(5).innerHTML = '<input type="number" name="harga[]" value="0" readonly>';
+      newRow.insertCell(6).innerHTML = '<input type="number" name="potongan[]" value="0" onchange="hitungJumlah(this.closest(\'tr\'))">';
+      newRow.insertCell(7).innerHTML = '<input type="number" name="jumlahHarga[]" value="0.00" readonly>';
+      newRow.insertCell(8).innerHTML = '<button type="button" class="btn btn-red" onclick="hapusRow(this)">X</button>';
+
+      const firstSelect = newRow.cells[0].querySelector("select");
+      if (firstSelect && produkMaster.length > 0) {
+        firstSelect.selectedIndex = 1;
+        updateHarga(firstSelect);
+        hitungJumlah(newRow);
+      }  
+    } 
+
+    function ambilProduk() {
+        fetch(API_URL)
+          .then(res => res.json())
+          .then(data => {
+              if (data.error) {       
+                  throw new Error(data.detail || data.error);
+              }
+              produkMaster = data;
+              tambahProduk();
+          })
+          .catch(err => {
+              console.error("Fetch Error:", err);
+              alert("❌ Gagal ambil produk dari Spreadsheet. Cek console untuk detail.");
+          });
+    }   
+    ambilProduk();
+    document.getElementById("kasirForm").addEventListener("submit", function(e) {
+      e.preventDefault();    
+      if (tableBody.children.length === 0 || parseAngka(document.getElementById("total").value) === 0) {  alert("Transaksi minimal harus memiliki satu produk dan Total tidak boleh nol.");
+          return;
+      }
+      const form = new FormData(this);
+      const data = {
+      	no: form.get("no"),
+        tanggal: form.get("tanggal"),
+        customer: form.get("customer"),
+        total: parseAngka(document.getElementById("total").value),
+        terbayar: parseAngka(form.get("terbayar")),
+        sisaPelunasan: parseAngka(document.getElementById("sisaPelunasan").value),
+        status: form.get("status"),
+        namapetugas: form.get("namapetugas"),
+        produkList: [],
+      };
+
+      tableBody.querySelectorAll("tr").forEach(r => {
+        data.produkList.push({
+          produk: r.cells[0].querySelector("select").value,
+          qty: parseAngka(r.cells[1].querySelector("input").value),
+          panjang: r.cells[2].querySelector("input").value,
+          lebar: r.cells[3].querySelector("input").value,
+          jumlahVolume: parseAngka(r.cells[4].querySelector("input").value),
+          harga: parseAngka(r.cells[5].querySelector("input").value),
+          potongan: parseAngka(r.cells[6].querySelector("input").value),
+          jumlahHarga: parseAngka(r.cells[7].querySelector("input").value)
+        });   
+      });
+
+      fetch(API_URL, {
+        method: "POST",
+        body: JSON.stringify(data),
+        headers: { "Content-Type": "application/json" }
+      })
+      .then(res => res.json())
+      .then(response => {
+        if (response.status === "OK") {
+          alert("✅ Transaksi berhasil disimpan ke Spreadsheet!");
+        } else {
+          throw new Error(response.message || "Pesan error tidak diketahui.");
+        }
+      })
+      .catch(err => {
+        console.error("Submission Error:", err);
+        alert(`❌ Error simpan transaksi! Detail: ${err.message}`);
+      });
+    });
+
+    // Menghubungkan input Terbayar dengan hitungTotal
+    terbayarInput.addEventListener('change', hitungTotal);
+    terbayarInput.addEventListener('keyup', hitungTotal);
+
+    // Fungsi cetak struk (masih sederhana, hanya print browser)
+    function cetakStruk() {
+      window.print();
+    } 
+
+    function cariProduk() {
+      const input = document.getElementById("searchProduk").value.toLowerCase();
+      const selects = document.querySelectorAll("select[name='produk[]']");
+
+      selects.forEach(select => {
+        for (let i = 0; i < select.options.length; i++) {
+          const txt = select.options[i].text.toLowerCase();
+          select.options[i].style.display = (input === "" || txt.includes(input)) ? "" : "none";
+        }
+      });
+    }
+
+  </script>
+
+  <script src="./javascript.js" type="script"></script>
+</body>
+</html>
