@@ -7,7 +7,7 @@ const app = express();
 const PORT = 3000;
 
 // URL APPS SCRIPT TERBARU DARI DEPLOYMENT FINAL ANDA
-const API_URL = "https://script.google.com/macros/s/AKfycbxuef1OOUrxQ1J6lTM_iwSBSuYeECjkW2-uRwROcHQ-o5yVV7J-dFGCyLypx-8-Idr4/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbz9AKn6aD8mu5vZR6oGisX3fNqW20HvtA14TvSbPhADolaAQoS2kV9UGNhwRXkzm5b8/exec";
 app.use(bodyParser.json());
 
 // Melayani file statis (HTML, CSS, JS) dari folder 'public'

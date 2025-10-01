@@ -229,7 +229,7 @@
                     </div>
                     <div class="content-item col-auto">
                         <label>Tanggal:</label><br />
-                        <input  class="form-control form-control-sm" type="date" name="tanggal" id="inputTanggal" readonly /><br /><br />
+                        <input  class="form-control form-control-sm" type="date" name="tanggal" id="inputTanggal" required /><br /><br />
                     </div>
                     <div class="content-item col-auto">
                         <label>Customer:</label><br />
@@ -296,24 +296,6 @@
     </div>
     
     <script>
-        function setTodayDate() {
-            const now = new Date();
-            // Mengambil tahun (misal 2025)
-            const year = now.getFullYear(); 
-            // Mengambil bulan (0-11), ditambah 1, lalu dipastikan 2 digit (misal 01, 12)
-            const month = String(now.getMonth() + 1).padStart(2, '0'); 
-            // Mengambil tanggal hari ini, lalu dipastikan 2 digit (misal 05, 28)
-            const day = String(now.getDate()).padStart(2, '0'); 
-            
-            // Mengisi input Tanggal dengan format YYYY-MM-DD
-            document.getElementById('inputTanggal').value = `${year}-${month}-${day}`;
-        }
-
-        // 🔑 Modifikasi window.onload agar memanggil fungsi baru
-        window.onload = function() {
-            setTodayDate(); // 💡 Tanggal otomatis diisi di sini
-        };
-
       const API_URL = "/api";
       let produkMaster = [];
       const tableBody = document.querySelector("#produkTable tbody");
@@ -451,8 +433,7 @@
           }
           const form = new FormData(this);
           const data = {
-            no: document.getElementById("noTransaksi").value,
-            // no: form.get("no"),
+            no: form.get("no"),
             tanggal: form.get("tanggal"),
             customer: form.get("customer"),
             total: parseAngka(document.getElementById("total").value),
